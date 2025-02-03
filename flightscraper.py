@@ -1,5 +1,6 @@
 from fast_flights import FlightData, Passengers, Result, get_flights
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from datetime import datetime, timedelta
 
 def fetch_with_timeout(func, *args, timeout=2, **kwargs):
     with ThreadPoolExecutor(max_workers=1) as executor:
@@ -22,7 +23,12 @@ class FlightScraper:
         self.num_children = num_children
         self.protected_price = protected_price
 
-    
+    def parse_time(self, time_str):
+        time_part = time_str.split(" on ")[0]
+        dt = datetime.strptime(time_part, "%I:%M %p")
+        dt = dt.replace(year=1970, month=1, day=1)
+        return dt
+
     def search_flights(self):
         if self.protected_price == 0:
             try:
@@ -37,12 +43,14 @@ class FlightScraper:
                             )
                 if results is None:
                     return float("inf"), "hello"
-                min_protected_price = 0
+                min_protected_price = float("inf") # maybe consider changing to max logic
                 flights = results.flights
+                direct_flight_results=[]
                 for i in range(min(10, len(flights))):
-                    min_protected_price = max(min_protected_price, int(flights[i].price.replace("$", "")))
+                    min_protected_price = min(min_protected_price, int(flights[i].price.replace("$", ""))) # maybe consider changing to max logic
+                    direct_flight_results.append(flights[i])
             
-                return min_protected_price, "hello"
+                return direct_flight_results, min_protected_price
             except Exception as e:
                 print(e)
                 print(f"Couldn't find any valid flight options from {self.departure_airport} to {self.arrival_airport} on {self.departure_date}")
@@ -50,13 +58,14 @@ class FlightScraper:
             #return flights
         else:
             major_airports = ["ATL", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
+            #["ATL", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
             #["SEA", "EWR", "SFO", "PHX", "IAH", "BOS", "FLL", "MSP", "LGA", "DTW", "PHL", "SLC", "BWI", "DCA", "SAN", "IAD", "TPA", "BNA", "AUS", "MDW", "HNL", "DAL", "PDX", "STL", "RDU", "HOU", "OGG", "PIT", "MCI", "MSY", "PHL"]
             min_unprotected_price = float("inf")
-            min_connecting_airport = ""
+            final_flight_results = []
             for airport in major_airports:
                 print(airport)
                 min_first_leg = float("inf")
-                min_second_leg = float("inf")
+                # min_second_leg = float("inf")
                 if(airport != self.arrival_airport and airport != self.departure_airport):
                     try:
                         results = fetch_with_timeout(get_flights,flight_data=[
@@ -72,12 +81,18 @@ class FlightScraper:
                             print(f"Timed out on {airport}")
                             continue
                         first_leg_flights = []
-                        curr_price = 0
-                        point_in_list = 0
-                        while curr_price < self.protected_price and point_in_list < len(results.flights):
-                            first_leg_flights.append(results.flights[point_in_list])
-                            point_in_list += 1
-                            min_first_leg = min(min_first_leg, int(flights[i].price.replace("$", "")))
+                        min_first_leg_arrival = self.parse_time("11:59 PM on Thu, Jan 30")
+
+                        for first_leg in results.flights:
+                            if(int(first_leg.price.replace("$", "")) < self.protected_price):
+                                first_leg_flights.append(first_leg)
+                                min_first_leg = min(min_first_leg, int(first_leg.price.replace("$", "")))
+                                min_first_leg_arrival = min(min_first_leg_arrival, self.parse_time(first_leg.arrival))
+                        
+                        # if min_first_leg_arrival > self.parse_time("10:30 PM on Thu, Jan 30"):
+                        #     continue
+
+
                         results = None
                         results = fetch_with_timeout(get_flights, flight_data=[
                                 FlightData(date=self.departure_date, from_airport=airport, to_airport=self.arrival_airport, max_stops=0)
@@ -88,24 +103,21 @@ class FlightScraper:
                                 fetch_mode="fallback",
                                 timeout = 2
                                 )
-                        if results is None:
+                        if results is None: 
                             print(f"Timed out on {airport}")
                             continue
-                        flights = results.flights
-                        for i in range(min(5,len(flights))):
-                            min_second_leg = min(min_second_leg, int(flights[i].price.replace("$", "")))
-                        
-                        if min_unprotected_price > min_first_leg + min_second_leg:
-                            min_unprotected_price = min_first_leg + min_second_leg
-                            min_connecting_airport = airport
+                        for second_leg in results.flights:
+                            if(self.parse_time(second_leg.departure) >= min_first_leg_arrival + timedelta(hours=2) and int(second_leg.price.replace("$", "")) + min_first_leg <= self.protected_price + 200):
+                                for first_leg in first_leg_flights:
+                                    if(self.parse_time(second_leg.departure) >= self.parse_time(first_leg.departure) + timedelta(hours = 2) and int(first_leg.price.replace("$", "")) + int(second_leg.price.replace("$", "")) <= self.protected_price + 200):
+                                        final_flight_results.append((first_leg, second_leg))
+                                        min_unprotected_price = min(min_unprotected_price, int(first_leg.price.replace("$", "")) + int(second_leg.price.replace("$", "")))
+
                     except Exception:
                         continue
 
                     
-            if(self.protected_price + 150 > min_unprotected_price):
-                return min_unprotected_price, min_connecting_airport
-            else:
-                return 0, "hello"
+            return final_flight_results, min_unprotected_price
             #return flights
                     
 

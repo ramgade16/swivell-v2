@@ -27,16 +27,26 @@ def main():
     
     print("Searching protected flights")
     protected_scraper = flightscraper.FlightScraper(engine.ticket_type, engine.departure_airport, engine.arrival_airport, engine.departure_date, engine.arrival_date, engine.num_adults, engine.num_children, 0)
-    min_protected_price, text = protected_scraper.search_flights()
-    print(min_protected_price)
-    print(text)
+    direct_flight_results, min_protected_price = protected_scraper.search_flights()
+    print("These are the direct flight results:")
+    print(direct_flight_results)
 
     print("Searching unprotected flights")
     unprotected_scraper = flightscraper.FlightScraper(engine.ticket_type, engine.departure_airport, engine.arrival_airport, engine.departure_date, engine.arrival_date, engine.num_adults, engine.num_children, min_protected_price)
-    min_unprotected_price, min_connecting_airport = unprotected_scraper.search_flights()
-    print(min_unprotected_price)
-    print(min_connecting_airport)
+    final_flight_results, min_unprotected_price = unprotected_scraper.search_flights()
+    print("These are the final flight results:")
+    for first_leg, second_leg in final_flight_results:
+        print(f"This is the first leg: {first_leg}")
+        print(f"This is the second leg: {second_leg}")
+        print("")
     
+    diff = min_unprotected_price - min_protected_price
+    if diff < 0:
+        print(f"You can save ${abs(diff)} with SWIVELL's unprotected option!!")
+    elif (diff == 0):
+        print(f"Both the protected and unprotected trip will cost you ${min_protected_price}. We recommend choosing the protected option. However, you may choose the unprotected option due to preference of airport, layover times, airline, etc.")
+    else:
+        print(f"The protected trip will save you ${diff}. Therefore, we recommend choosing the protected option.")
 
 if __name__ == "__main__":
     main()
