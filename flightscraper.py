@@ -47,8 +47,9 @@ class FlightScraper:
                 flights = results.flights
                 direct_flight_results=[]
                 for i in range(min(10, len(flights))):
-                    min_protected_price = min(min_protected_price, int(flights[i].price.replace("$", ""))) # maybe consider changing to max logic
-                    direct_flight_results.append(flights[i])
+                    if int(flights[i].price.replace("$", "")) != 0:
+                        min_protected_price = min(min_protected_price, int(flights[i].price.replace("$", ""))) # maybe consider changing to max logic
+                        direct_flight_results.append(flights[i])
             
                 return direct_flight_results, min_protected_price
             except Exception as e:
@@ -84,8 +85,8 @@ class FlightScraper:
                         min_first_leg_arrival = self.parse_time("11:59 PM on Thu, Jan 30")
 
                         for first_leg in results.flights:
-                            if(int(first_leg.price.replace("$", "")) < self.protected_price):
-                                first_leg_flights.append(first_leg)
+                            if(int(first_leg.price.replace("$", "")) != 0 and int(first_leg.price.replace("$", "")) < self.protected_price):
+                                first_leg_flights.append((self.parse_time(first_leg.arrival), first_leg))
                                 min_first_leg = min(min_first_leg, int(first_leg.price.replace("$", "")))
                                 min_first_leg_arrival = min(min_first_leg_arrival, self.parse_time(first_leg.arrival))
                         
@@ -106,12 +107,18 @@ class FlightScraper:
                         if results is None: 
                             print(f"Timed out on {airport}")
                             continue
+                        first_leg_flights = sorted(first_leg_flights, key=lambda x: x[0])
+                        print(first_leg_flights)
+
                         for second_leg in results.flights:
-                            if(self.parse_time(second_leg.departure) >= min_first_leg_arrival + timedelta(hours=2) and int(second_leg.price.replace("$", "")) + min_first_leg <= self.protected_price + 200):
-                                for first_leg in first_leg_flights:
-                                    if(self.parse_time(second_leg.departure) >= self.parse_time(first_leg.departure) + timedelta(hours = 2) and int(first_leg.price.replace("$", "")) + int(second_leg.price.replace("$", "")) <= self.protected_price + 200):
+                            if(int(second_leg.price.replace("$", ""))!=0 and int(second_leg.price.replace("$", "")) + min_first_leg <= self.protected_price + 200):
+                                curr_position = 0
+                                while(curr_position < len(first_leg_flights) and self.parse_time(second_leg.departure) >= first_leg_flights[curr_position][0] + timedelta(hours = 2)):
+                                    first_leg = first_leg_flights[curr_position][1]
+                                    if (int(first_leg.price.replace("$", "")) + int(second_leg.price.replace("$", "")) <= self.protected_price + 200):
                                         final_flight_results.append((first_leg, second_leg))
                                         min_unprotected_price = min(min_unprotected_price, int(first_leg.price.replace("$", "")) + int(second_leg.price.replace("$", "")))
+                                    curr_position += 1
 
                     except Exception:
                         continue

@@ -31,6 +31,7 @@ def main():
     print("These are the direct flight results:")
     print(direct_flight_results)
 
+
     print("Searching unprotected flights")
     unprotected_scraper = flightscraper.FlightScraper(engine.ticket_type, engine.departure_airport, engine.arrival_airport, engine.departure_date, engine.arrival_date, engine.num_adults, engine.num_children, min_protected_price)
     final_flight_results, min_unprotected_price = unprotected_scraper.search_flights()
