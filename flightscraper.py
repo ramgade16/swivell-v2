@@ -122,6 +122,9 @@ class FlightScraper:
             flights_for_ranking = flights_of_interest
         else:
             flights_for_ranking = [flight_tuple[0] for flight_tuple in flights_of_interest]
+        
+        if not flights_for_ranking:
+            return []  # or handle the empty case appropriately
     
         df = pd.DataFrame([
             {
@@ -385,4 +388,4 @@ class FlightScraper:
     
 
     #["ATL", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
-        #["SEA", "EWR", "SFO", "PHX", "IAH", "BOS", "FLL", "MSP", "LGA", "DTW", "PHL", "SLC", "BWI", "DCA", "SAN", "IAD", "TPA", "BNA", "AUS", "MDW", "HNL", "DAL", "PDX", "STL", "RDU", "HOU", "OGG", "PIT", "MCI", "MSY", "PHL"]
+    #["SEA", "EWR", "SFO", "PHX", "IAH", "BOS", "FLL", "MSP", "LGA", "DTW", "PHL", "SLC", "BWI", "DCA", "SAN", "IAD", "TPA", "BNA", "AUS", "MDW", "HNL", "DAL", "PDX", "STL", "RDU", "HOU", "OGG", "PIT", "MCI", "MSY", "PHL"]

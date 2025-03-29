@@ -22,30 +22,36 @@ def main():
     print("")
     unprotected_flight_results, min_unprotected_price = scraper.search_unprotected_flights(min_protected_price)
 
-    print("These are the 10 best Unprotected Flight Results:")
-
-    curr_option = 1
-    for total_option, first_leg_option, second_leg_option, layover_airport in unprotected_flight_results:
-        if curr_option == 21:
-            break
-        print(f"Option {int(curr_option/2) + 1}:")
-        print("Total Option:")
-        total_option_duration_hours = int(total_option.duration_in_minutes/60)
-        total_option_duration_minutes = total_option.duration_in_minutes % 60
-        print(f"[(Airlines: {total_option.airlines}), (Departure Airport: {scraper.departure_airport}), (Layover Airport: {layover_airport}), (Arrival Airport: {scraper.arrival_airport}), (Departure Time: {total_option.departure_time}), (Arrival Time: {total_option.arrival_time}), (Duration: {total_option_duration_hours} hrs {total_option_duration_minutes} mins), (Price: {total_option.price})]")
-        print("Leg 1:")
-        first_leg_duration_hours = int(first_leg_option.duration_in_minutes/60)
-        first_leg_duration_minutes = first_leg_option.duration_in_minutes % 60
-        print(f"[(Airlines: {first_leg_option.airlines}), (Departure Airport: {scraper.departure_airport}), (Arrival Airport: {layover_airport}), (Departure Time: {first_leg_option.departure_time}), (Arrival Time: {first_leg_option.arrival_time}), (Duration: {first_leg_duration_hours} hrs {first_leg_duration_minutes} mins)]")
-        print("Leg 2:")
-        second_leg_duration_hours = int(second_leg_option.duration_in_minutes/60)
-        second_leg_duration_minutes = second_leg_option.duration_in_minutes % 60
-        print(f"[(Airlines: {second_leg_option.airlines}), (Departure Airport: {layover_airport}), (Arrival Airport: {scraper.arrival_airport}), (Departure Time: {second_leg_option.departure_time}), (Arrival Time: {second_leg_option.arrival_time}), (Duration: {second_leg_duration_hours} hrs {second_leg_duration_minutes} mins)]")
+    if len(unprotected_flight_results) == 0:
+        print("There are no reasonable Unprotected Flight Results.")
         print("")
-        curr_option += 2
+    else:
+        print("These are the 10 best Unprotected Flight Results:")
+        curr_option = 1
+        for total_option, first_leg_option, second_leg_option, layover_airport in unprotected_flight_results:
+            if curr_option == 21:
+                break
+            print(f"Option {int(curr_option/2) + 1}:")
+            print("Total Option:")
+            total_option_duration_hours = int(total_option.duration_in_minutes/60)
+            total_option_duration_minutes = total_option.duration_in_minutes % 60
+            print(f"[(Airlines: {total_option.airlines}), (Departure Airport: {scraper.departure_airport}), (Layover Airport: {layover_airport}), (Arrival Airport: {scraper.arrival_airport}), (Departure Time: {total_option.departure_time}), (Arrival Time: {total_option.arrival_time}), (Duration: {total_option_duration_hours} hrs {total_option_duration_minutes} mins), (Price: {total_option.price})]")
+            print("Leg 1:")
+            first_leg_duration_hours = int(first_leg_option.duration_in_minutes/60)
+            first_leg_duration_minutes = first_leg_option.duration_in_minutes % 60
+            print(f"[(Airlines: {first_leg_option.airlines}), (Departure Airport: {scraper.departure_airport}), (Arrival Airport: {layover_airport}), (Departure Time: {first_leg_option.departure_time}), (Arrival Time: {first_leg_option.arrival_time}), (Duration: {first_leg_duration_hours} hrs {first_leg_duration_minutes} mins)]")
+            print("Leg 2:")
+            second_leg_duration_hours = int(second_leg_option.duration_in_minutes/60)
+            second_leg_duration_minutes = second_leg_option.duration_in_minutes % 60
+            print(f"[(Airlines: {second_leg_option.airlines}), (Departure Airport: {layover_airport}), (Arrival Airport: {scraper.arrival_airport}), (Departure Time: {second_leg_option.departure_time}), (Arrival Time: {second_leg_option.arrival_time}), (Duration: {second_leg_duration_hours} hrs {second_leg_duration_minutes} mins)]")
+            print("")
+            curr_option += 2
     
+
     diff = min_unprotected_price - min_protected_price
-    if diff < 0:
+    if len(unprotected_flight_results) == 0:
+        print("Please choose one of the Protected Flight Results!")
+    elif diff < 0:
         print(f"You can save ${abs(diff)} with SWIVELL's unprotected option!!")
     elif (diff == 0):
         print(f"Both the protected and unprotected trip will cost you ${min_protected_price}. We recommend choosing the protected option. However, you may choose the unprotected option due to preference of airport, layover times, airline, etc.")
