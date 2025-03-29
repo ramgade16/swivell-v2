@@ -276,8 +276,6 @@ class FlightScraper:
 
     def search_unprotected_flights(self, min_protected_price):
         major_airports = ["ATL", "FLL", "IAH", "PHX", "BNA", "IAD","PHL", "LGA", "BWI", "MDW", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
-        #["ATL", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
-        #["SEA", "EWR", "SFO", "PHX", "IAH", "BOS", "FLL", "MSP", "LGA", "DTW", "PHL", "SLC", "BWI", "DCA", "SAN", "IAD", "TPA", "BNA", "AUS", "MDW", "HNL", "DAL", "PDX", "STL", "RDU", "HOU", "OGG", "PIT", "MCI", "MSY", "PHL"]
         min_unprotected_price = float("inf")
         for airport in major_airports:
             # print(airport)
@@ -384,3 +382,7 @@ class FlightScraper:
         ranked_unprotected_flight_results = self.rank_flights(self.unprotected_flight_results, False)
    
         return ranked_unprotected_flight_results, min_unprotected_price
+    
+
+    #["ATL", "LAX", "DFW", "DEN", "ORD", "JFK", "MCO", "LAS", "CLT", "MIA"] 
+        #["SEA", "EWR", "SFO", "PHX", "IAH", "BOS", "FLL", "MSP", "LGA", "DTW", "PHL", "SLC", "BWI", "DCA", "SAN", "IAD", "TPA", "BNA", "AUS", "MDW", "HNL", "DAL", "PDX", "STL", "RDU", "HOU", "OGG", "PIT", "MCI", "MSY", "PHL"]
