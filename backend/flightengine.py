@@ -1,4 +1,4 @@
-import flightscraper
+import backend.flightscraper as flightscraper
 
 def main():
     scraper = flightscraper.FlightScraper()

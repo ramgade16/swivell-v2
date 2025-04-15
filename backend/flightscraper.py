@@ -1,7 +1,7 @@
 from fast_flights import FlightData, Passengers, Result, get_flights
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime, timedelta
-from ranker import XGBoostRanker
+from backend.ranker import XGBoostRanker
 import heapq
 import pandas as pd
 from dataclasses import dataclass
@@ -42,7 +42,6 @@ class FlightScraper:
 
     # initializes the scraper instance
     def __init__(self):
-        print("Hello! I hope you're ready to book some flights!")
 
         self.ranker = XGBoostRanker(
             model_path='xgboost_model.json',
@@ -56,6 +55,7 @@ class FlightScraper:
     
     # prompts the user for their travel details
     def askUserForFlightDetails(self):
+        print("Hello! I hope you're ready to book some flights!")
         self.ticket_type = input("Will you be flying One-Way or Round-Trip? (Answer with an \"O\" or \"R\") --> ")
         self.departure_airport = input("Which airport will you be flying from today? Please enter the airport's 3-letter code (e.g. \"LAX\") --> ")
         self.arrival_airport = input("Which airport will you be flying to today?  Please enter the airport's 3-letter code (e.g. \"ORD\") -->  ")
@@ -157,14 +157,20 @@ class FlightScraper:
         
         # 8. Sort flights by descending predicted score
         df["score"] = predictions
+        df["original_index"] = range(len(df))  # Track original position before sorting
+
+        # Sort by score
         df_sorted = df.sort_values("score", ascending=False).reset_index(drop=True)
 
-        # 9. Re-map the sorted DataFrame rows back to the original flights
-        #    Typically you'd store an index in df so you can do this easily:
-        df_sorted["original_index"] = df_sorted.index
-        ranked_flights = [flights_of_interest[i] for i in df_sorted.index]
+        # Drop duplicates based on key flight attributes
+        deduped_df = df_sorted.drop_duplicates(
+            subset=["flight_price", "num_stops", "duration_minutes", "departure_time", "arrival_time", "airlines"]
+        ).reset_index(drop=True)
 
+        # Map back to original flights using stored index
+        ranked_flights = [flights_of_interest[i] for i in deduped_df["original_index"]]
         return ranked_flights
+
 
 
 
